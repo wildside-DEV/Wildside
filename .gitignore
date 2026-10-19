@@ -2,5 +2,8 @@ node_modules/
 .expo/
 dist/
 *.log
+*.json
+metro-pid.txt
+restoreExpoMiddleware.js
 .DS_Store
 ngrok/
