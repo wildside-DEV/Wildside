@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, Modal, Animated, PanResponder, Switch, Platform, ActivityIndicator, Easing, Linking } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import MapView, { Marker, Circle } from "react-native-maps";
+import MapView, { Marker, Circle, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -20,8 +20,9 @@ import { WEB_BASE } from "./src/config";
 import { DEN_DISC, DEN_ICON, ITEM_ICON, EXPLORER } from "./src/art";
 
 const C = {
-  bg: "#EEF1EC", surface: "#FBFCF9", ink: "#1D2622", muted: "#5C6B63", line: "#CDD5CF", accent: "#B0186F",
-  teal: "#18A999", lilac: "#9B8BD0", blue: "#1A73E8", plate: "#E6E3D6", good: "#2F7F4A", bad: "#B23A2E",
+  bg: "#E9EDEA", surface: "#FBFBFA", ink: "#1B241F", muted: "#5B6A62", line: "#CFD6D1", accent: "#B0186F",
+  teal: "#16A399", lilac: "#9587CD", blue: "#1768D3", plate: "#E4E1D3", good: "#2C7A47", bad: "#B23A2E",
+  mapLine: "#9AA8A3", brandHi: "#FFC947", critterShadow: "rgba(12,18,14,0.18)",
 };
 const SAVE_KEY = "wildside.v1";
 const PREFS_KEY = "wildside.app";
@@ -251,8 +252,8 @@ function Game() {
   if (perm === "denied" && !prefs.simOn) {
     return (
       <View style={[styles.fill, styles.center, { padding: 28, backgroundColor: C.bg }]}>
-        <Text style={styles.wordmark}>WILD<Text style={{ color: C.accent }}>SIDE</Text></Text>
-        <Text style={[styles.p, { textAlign: "center", marginTop: 12 }]}>Wildside needs your location to show the wildlife around you. You can allow it in Settings → Privacy → Location Services → Expo Go.</Text>
+        <Text style={styles.wordmark}>WILD<Text style={{ color: C.accent }}>SIDE</Text> <Text style={[styles.wordmarkGo, { color: C.accent }]}>GO</Text></Text>
+        <Text style={[styles.p, { textAlign: "center", marginTop: 12 }]}>Wildside Go needs your location to show the wildlife around you. You can allow it in Settings → Privacy → Location Services → Expo Go.</Text>
         <Pressable style={[styles.btnPrimary, { marginTop: 18 }]} onPress={() => Linking.openSettings()}><Text style={styles.btnPrimaryT}>Open Settings</Text></Pressable>
         <Pressable style={[styles.btn, { marginTop: 10 }]} onPress={() => setPref("simOn", true)}><Text style={styles.btnT}>Try test walking instead</Text></Pressable>
       </View>
@@ -269,7 +270,7 @@ function Game() {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
-        mapType={Platform.OS === "ios" ? "mutedStandard" : "standard"}
+        provider={PROVIDER_GOOGLE}
         showsUserLocation={false}
         showsBuildings
         pitchEnabled
@@ -281,8 +282,8 @@ function Game() {
         onPanDrag={() => setFollow(false)}
         onPress={mapPress}
       >
-        {player && <Circle center={player} radius={ENCOUNTER_RANGE_M} strokeColor="rgba(26,115,232,0.65)" strokeWidth={2} fillColor="rgba(26,115,232,0.08)" />}
-        {lureOn && <Circle center={lure} radius={55} strokeColor="rgba(224,184,58,0.85)" strokeWidth={2} fillColor="rgba(245,215,110,0.18)" />}
+        {player && <Circle center={player} radius={ENCOUNTER_RANGE_M} strokeColor="rgba(23,104,211,0.75)" strokeWidth={2.5} fillColor="rgba(23,104,211,0.12)" />}
+        {lureOn && <Circle center={lure} radius={60} strokeColor="rgba(255,196,55,0.95)" strokeWidth={2.5} fillColor="rgba(255,214,94,0.22)" />}
         {dens.map(d => (
           <Marker key={d.id + (denReady(save, d) ? "r" : "c")} coordinate={d} anchor={{ x: 0.5, y: 0.9 }} centerOffset={{ x: 0, y: -22 }} onPress={() => tapDen(d)} tracksViewChanges={false}>
             <DenPin ready={denReady(save, d)} />
@@ -302,12 +303,13 @@ function Game() {
 
       {/* top bar */}
       <View style={[styles.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
-        <View style={[styles.card, { flex: 1 }]}>
-          <Text style={styles.wordmark}>WILD<Text style={{ color: C.accent }}>SIDE</Text></Text>
-          <View style={styles.rowBetween}><Text style={styles.small}>{rankOf(lv)}</Text><Text style={styles.small}>Lv {lv} · {save.xp} XP</Text></View>
+        <View style={[styles.topCard, { flex: 1 }]}>
+          <Text style={styles.wordmark}>WILD<Text style={{ color: C.accent }}>SIDE</Text> <Text style={[styles.wordmarkGo, { color: C.accent }]}>GO</Text></Text>
+          <View style={styles.rowBetween}><Text style={[styles.small, { color: C.accent, fontWeight: "800" }]}>{rankOf(lv)}</Text><Text style={[styles.small, { color: C.accent, fontWeight: "800" }]}>Lv {lv}</Text></View>
           <View style={styles.xpbar}><View style={[styles.xpfill, { width: `${Math.round(((save.xp - lo) / (hi - lo)) * 100)}%` }]} /></View>
+          <View style={styles.rowBetween}><Text style={[styles.tiny, { color: C.muted, marginTop: 2 }]}>{save.xp} XP</Text></View>
         </View>
-        <View style={[styles.card, { alignItems: "flex-end", minWidth: 120 }]}>
+        <View style={[styles.card, { alignItems: "flex-end", minWidth: 124 }]}>
           <Text style={styles.clock}>{new Date().toTimeString().slice(0, 5)}</Text>
           <Text style={styles.small}>{phase(h)} · {season(nowMonth())}</Text>
           <Text style={[styles.tiny, { color: areaState === "error" ? C.bad : C.muted }]}>
@@ -322,13 +324,12 @@ function Game() {
       </View>
 
       {/* bottom: nearby + buttons */}
-      <View style={[styles.bottom, { paddingBottom: insets.bottom + 10 }]} pointerEvents="box-none">
-        <View style={styles.card}>
+      <View style={[styles.bottom, { paddingBottom: insets.bottom + 10 }]} pointerEvents="box-none">          <View style={[styles.card, { paddingTop: 12, paddingBottom: 12 }]}>
           <View style={styles.rowBetween}>
             <Text style={styles.label}>NEARBY</Text>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
               {lureOn && <Text style={styles.lureChip}>Seed {fmtMS(lure.until - Date.now())}</Text>}
-              <Text style={styles.small}>{nearby.animals.filter(o => o.d <= ENCOUNTER_RANGE_M).length ? `${nearby.animals.filter(o => o.d <= ENCOUNTER_RANGE_M).length} in range` : nearby.animals.length ? `${nearby.animals.length} within 300 m` : ""}</Text>
+              <Text style={[styles.small, { color: nearby.animals.filter(o => o.d <= ENCOUNTER_RANGE_M).length ? C.accent : C.muted, fontWeight: nearby.animals.filter(o => o.d <= ENCOUNTER_RANGE_M).length ? "800" : "600" }]}>{nearby.animals.filter(o => o.d <= ENCOUNTER_RANGE_M).length ? `${nearby.animals.filter(o => o.d <= ENCOUNTER_RANGE_M).length} in range` : nearby.animals.length ? `${nearby.animals.length} within 300 m` : ""}</Text>
             </View>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingTop: 6, minHeight: 66 }}>
@@ -360,13 +361,14 @@ function Game() {
         </View>
         <View style={styles.btnRow}>
           <Pressable style={styles.iconBtn} onPress={() => setSheet({ type: "settings" })} accessibilityLabel="Settings"><Text style={styles.iconT}>⚙︎</Text></Pressable>
-          <Pressable style={styles.iconBtn} onPress={() => setSheet({ type: "bag" })} accessibilityLabel="Bag">
-            <SvgXml xml={ITEM_ICON.bag} width={20} height={20} />
-            <View style={styles.badge}><Text style={styles.badgeT}>{bagTotal(save)}</Text></View>
-          </Pressable>
+              <Pressable style={styles.iconBtn} onPress={() => setSheet({ type: "bag" })} accessibilityLabel="Bag">
+            <SvgXml xml={ITEM_ICON.bag} width={22} height={22} />
+                <View style={styles.badge}><Text style={styles.badgeT}>{bagTotal(save)}</Text></View>
+              </Pressable>
           <Pressable style={styles.btnPrimary} onPress={() => setWeb({ mode: "guide" })}>
-            <Text style={styles.btnPrimaryT}>Field Guide  <Text style={{ fontWeight: "400", fontSize: 12 }}>{Object.values(save.rec).filter(r => r.tracked).length}/41</Text></Text>
-          </Pressable>
+            <Text style={styles.btnPrimaryT}>Field Guide</Text>
+                <Text style={[styles.btnPrimarySub, { color: "rgba(255,255,255,0.85)" }]}>{Object.values(save.rec).filter(r => r.tracked).length} / 41 spotted</Text>
+              </Pressable>
         </View>
       </View>
 
@@ -388,9 +390,14 @@ function Game() {
 
 // ---------------- map pins ----------------
 function AnimalPin({ sp }) {
+  const rar = sp.rar;
+  const isHot = rar === "rare" || rar === "legendary";
   return (
-    <View style={[styles.pin, { borderColor: RARCOL[sp.rar], borderWidth: sp.rar === "common" ? 2 : 3 }]}>
-      <SvgXml xml={SVGS[sp.id]} width={28} height={28} />
+    <View style={[styles.pin, { borderColor: RARCOL[rar], borderWidth: isHot ? 3.5 : 2.5, backgroundColor: "#fff" }]}>
+      <View style={styles.pinInner}>
+        <SvgXml xml={SVGS[sp.id]} width={26} height={26} />
+      </View>
+      {isHot && <View style={[styles.pinHotRim, { borderColor: RARCOL[rar] }]} />}
     </View>
   );
 }
@@ -404,9 +411,11 @@ function DenPin({ ready }) {
 }
 function PlayerPin({ heading }) {
   return (
-    <View style={{ width: 54, height: 54, alignItems: "center", justifyContent: "center" }}>
+    <View style={{ width: 64, height: 64, alignItems: "center", justifyContent: "center" }}>
+      <View style={[styles.playerShadow]} />
+      <View style={[styles.playerRing]} />
       <View style={[styles.beam, { transform: [{ rotate: `${heading || 0}deg` }] }]}><View style={styles.beamTip} /></View>
-      <SvgXml xml={EXPLORER} width={34} height={34} />
+      <SvgXml xml={EXPLORER} width={38} height={38} />
     </View>
   );
 }
@@ -496,7 +505,7 @@ function BagSheet({ save, lureOn, onSeed, onClose }) {
 
 function SettingsSheet({ prefs, setPref, perm, onClose }) {
   return (
-    <Sheet onClose={onClose} eyebrow="SETTINGS" title="Wildside">
+    <Sheet onClose={onClose} eyebrow="SETTINGS" title="Wildside Go">
       <View style={styles.setRow}>
         <View style={{ flex: 1 }}><Text style={styles.bagName}>Test walking</Text><Text style={styles.small}>Tap the map to move your explorer, for testing indoors. Turn off to use real GPS{perm === "denied" ? " (location is currently off for Expo Go)" : ""}.</Text></View>
         <Switch value={prefs.simOn} onValueChange={v => setPref("simOn", v)} trackColor={{ true: C.accent }} />
@@ -505,7 +514,7 @@ function SettingsSheet({ prefs, setPref, perm, onClose }) {
         <View style={{ flex: 1 }}><Text style={styles.bagName}>Music and nature sounds</Text><Text style={styles.small}>Plays even with the silent switch on.</Text></View>
         <Switch value={prefs.sound} onValueChange={v => setPref("sound", v)} trackColor={{ true: C.accent }} />
       </View>
-      <Text style={[styles.small, { marginTop: 10 }]}>Habitats and Dens come from OpenStreetMap. Map data © OpenStreetMap contributors. 3D models, music and sounds are credited in the Field Guide.</Text>
+      <Text style={[styles.small, { marginTop: 10 }]}>Habitats and Dens come from OpenStreetMap. Map tiles © Google. 3D models, music and sounds are credited in the Field Guide.</Text>
     </Sheet>
   );
 }
@@ -571,37 +580,44 @@ const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
   rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   top: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "row", gap: 10, paddingHorizontal: 14 },
-  card: { backgroundColor: C.surface, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, paddingVertical: 9, ...shadow },
+  card: { backgroundColor: C.surface, borderRadius: 14, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, paddingVertical: 10, ...shadow },
+  topCard: { backgroundColor: C.surface, borderRadius: 16, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, paddingVertical: 10, ...shadow },
   wordmark: { fontSize: 22, fontWeight: "800", letterSpacing: 2, color: C.ink },
+  wordmarkGo: { fontSize: 13, fontWeight: "800", letterSpacing: 0.5, marginLeft: 4 },
   clock: { fontSize: 20, fontWeight: "700", color: C.ink, fontVariant: ["tabular-nums"] },
   small: { fontSize: 12, color: C.muted, lineHeight: 16 },
   tiny: { fontSize: 11, color: C.muted, marginTop: 2 },
   p: { fontSize: 15, color: C.ink, lineHeight: 21 },
   label: { fontSize: 12, fontWeight: "700", letterSpacing: 1.5, color: C.muted },
-  xpbar: { height: 5, borderRadius: 3, backgroundColor: C.line, overflow: "hidden", marginTop: 5 },
-  xpfill: { height: "100%", backgroundColor: C.accent },
+  xpbar: { height: 5, borderRadius: 3, backgroundColor: C.line, overflow: "hidden", marginTop: 6 },
+  xpfill: { height: "100%", backgroundColor: C.accent, borderRadius: 3 },
   mapctl: { position: "absolute", right: 14 },
-  bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 14, gap: 8 },
-  btnRow: { flexDirection: "row", gap: 8, justifyContent: "flex-end", alignItems: "center" },
-  iconBtn: { width: 46, height: 46, borderRadius: 12, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center", ...shadow },
-  iconT: { fontSize: 20, color: C.ink },
-  badge: { position: "absolute", top: -6, right: -6, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.ink, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
-  badgeT: { color: C.surface, fontSize: 10, fontWeight: "700" },
-  btnPrimary: { backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 16, height: 46, alignItems: "center", justifyContent: "center", ...shadow },
-  btnPrimaryT: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  btn: { backgroundColor: C.surface, borderRadius: 10, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, paddingVertical: 8 },
+  bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 14, gap: 10, paddingBottom: 10 },
+  btnRow: { flexDirection: "row", gap: 10, justifyContent: "flex-end", alignItems: "center" },
+  iconBtn: { width: 50, height: 50, borderRadius: 14, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center", ...shadow },
+  iconT: { fontSize: 21, color: C.ink },
+  badge: { position: "absolute", top: -7, right: -7, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: C.accent, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
+  badgeT: { color: "#fff", fontSize: 11, fontWeight: "800" },
+  btnPrimary: { backgroundColor: C.accent, borderRadius: 14, paddingHorizontal: 18, height: 48, alignItems: "center", justifyContent: "center", ...shadow },
+  btnPrimaryT: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  btnPrimarySub: { color: "rgba(255,255,255,0.85)", fontWeight: "600", fontSize: 12, marginTop: 2 },
+  btn: { backgroundColor: C.surface, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14, paddingVertical: 10 },
   btnT: { color: C.ink, fontWeight: "700", fontSize: 14 },
-  chip: { width: 52, alignItems: "center", gap: 3 },
-  chipIc: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.plate, borderWidth: 2, borderColor: C.line, alignItems: "center", justifyContent: "center" },
-  inRange: { shadowColor: C.blue, shadowOpacity: 0.9, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
-  chipD: { fontSize: 10, color: C.muted, fontVariant: ["tabular-nums"] },
-  newTag: { position: "absolute", top: -5, right: -8, backgroundColor: C.accent, color: "#fff", fontSize: 9, fontWeight: "800", paddingHorizontal: 4, borderRadius: 6, overflow: "hidden" },
-  lureChip: { backgroundColor: "#F5E3A6", color: "#5A4300", fontSize: 11, paddingHorizontal: 8, paddingVertical: 1, borderRadius: 10, overflow: "hidden" },
-  pin: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", ...shadow },
-  denPin: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#fff", ...shadow },
-  denPost: { width: 4, height: 10, borderRadius: 2, marginTop: -1 },
-  beam: { position: "absolute", width: 54, height: 54, alignItems: "center" },
-  beamTip: { width: 0, height: 0, borderLeftWidth: 8, borderRightWidth: 8, borderBottomWidth: 14, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: "rgba(26,115,232,0.85)" },
+  chip: { width: 56, alignItems: "center", gap: 4 },
+  chipIc: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.plate, borderWidth: 2.5, borderColor: C.line, alignItems: "center", justifyContent: "center" },
+  inRange: { borderColor: C.blue, borderWidth: 2, shadowColor: C.blue, shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
+  chipD: { fontSize: 11, color: C.muted, fontVariant: ["tabular-nums"] },
+  newTag: { position: "absolute", top: -6, right: -9, backgroundColor: C.accent, color: "#fff", fontSize: 10, fontWeight: "800", paddingHorizontal: 5, borderRadius: 7, overflow: "hidden", borderWidth: 1.5, borderColor: "#fff" },
+  lureChip: { backgroundColor: "#F7E7A8", color: "#5A4300", fontSize: 11, paddingHorizontal: 9, paddingVertical: 2, borderRadius: 11, overflow: "hidden", borderWidth: 1, borderColor: "#E9D07A" },
+  pin: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", ...shadow },
+  pinInner: { alignItems: "center", justifyContent: "center" },
+  pinHotRim: { position: "absolute", width: 50, height: 50, borderRadius: 25, borderWidth: 2.5, borderColor: "transparent" },
+  denPin: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center", borderWidth: 2.5, borderColor: "#fff", ...shadow },
+  denPost: { width: 5, height: 12, borderRadius: 2.5, marginTop: -1.5 },
+  beam: { position: "absolute", width: 64, height: 64, alignItems: "center" },
+  beamTip: { width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderBottomWidth: 16, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: "rgba(23,104,211,0.9)" },
+  playerShadow: { position: "absolute", width: 70, height: 70, borderRadius: 35, backgroundColor: C.critterShadow, alignItems: "center", justifyContent: "center" },
+  playerRing: { position: "absolute", width: 78, height: 78, borderRadius: 39, borderWidth: 2.5, borderColor: C.blue, opacity: 0.5 },
   toast: { position: "absolute", alignSelf: "center", backgroundColor: C.ink, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, maxWidth: "90%" },
   toastT: { color: C.surface, fontWeight: "700", fontSize: 13, textAlign: "center" },
   scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(10,16,13,0.45)" },

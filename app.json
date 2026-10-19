@@ -1,18 +1,25 @@
 {
   "expo": {
-    "name": "Wildside",
-    "slug": "wildside",
+    "name": "Wildside Go",
+    "slug": "wildside-go",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.wildside.game",
+      "bundleIdentifier": "com.wildsidego.game",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Wildside uses your location to show the wildlife around you and to let you walk up to it.",
-        "NSCameraUsageDescription": "Wildside uses the camera to photograph real wildlife sightings."
+        "NSLocationWhenInUseUsageDescription": "Wildside Go uses your location to show the wildlife around you and to let you walk up to it.",
+        "NSCameraUsageDescription": "Wildside Go uses the camera to photograph real wildlife sightings."
       }
     },
-    "android": { "package": "com.wildside.game", "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"] }
+    "android": {
+      "package": "com.wildsidego.game",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "sdkVersion": "57.0.0"
   }
 }
